@@ -104,7 +104,7 @@ function authorize(credentials, callback) {
     return getAccessToken(oAuth2Client, callback);
   }else
     {
-      oAuth2Client.setCredentials(JSON.parse(token));
+      oAuth2Client.setCredentials(JSON.parse(localStorage.getItem('token')));
       callback(oAuth2Client);
     }
 }
@@ -177,8 +177,8 @@ function uploadFile(auth) {
               // Handle error
               console.error(err);
             } else {
-                console.log('Folder Id: ', file.id);
-                var folderId = file.id;
+                console.log('Folder Id: ', file.data.id);
+                var folderId = file.data.id;
                 // upload dwownloaded files
                 torrent.files.forEach(function (file) {
                   var fileMetadata = {
@@ -198,7 +198,7 @@ function uploadFile(auth) {
                       // Handle error
                       console.error(err);
                     } else {
-                      console.log('File Id: ', file.id);
+                      console.log('File Id: ', file.data.id);
                     }
                   });
                 })
