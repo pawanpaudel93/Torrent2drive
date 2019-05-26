@@ -1,0 +1,36 @@
+{{#> base }}
+    {{#*inline 'style-block'}}
+        <link rel="stylesheet" type="text/css" media="screen" href="downloader.css" />
+    {{/inline}}
+    {{#*inline "content-block"}}
+        <br><br>
+        <div class="ui grid">
+            <div class="four wide column"></div>
+            <div class="eight wide column">
+                <a class="ui red label">{{download}}</a>
+                {{!-- <form ref='uploadForm' id='uploadForm' action='/' method='POST' encType="multipart/form-data">
+                        <input type="file" name="sampleFile" />
+                        <input type='submit' value='Upload!' />
+                </form>    --}}
+                <form action="/downloader" method='POST'>
+                    <div class="ui right labeled fluid left icon input">
+                        <i class="tags icon"></i>
+                        <input type="text" placeholder="Enter torrent magnet link" name="magnet" id="magnet">
+                        <a class="ui red tag label">
+                            Magnet Link
+                        </a>
+                    </div><br><br>
+                    <button id='magnetButton' type="submit" class="ui red basic button">Download</button><br><br>
+                    <div id="progress-wrp">
+                        <div class="progress-bar"></div>
+                        <div class="status">0%</div>
+                    </div>
+                </form>
+            </div>
+            <div class="four wide column"></div>
+        </div>
+    {{/inline}}
+    {{#*inline 'scripts-block'}}
+        <script src="downloader.js"></script>
+    {{/inline}}
+{{/base}}

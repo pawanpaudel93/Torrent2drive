@@ -1,0 +1,20 @@
+{{#> base }}
+
+    {{#*inline "content-block"}}
+        <br><br>
+        <div class="ui grid">
+            <div class="four wide column"></div>
+            <div class="eight wide column">
+                <a class="ui red label">{{download}}</a>
+                <button id="authenticate">
+                    Authenticate To GDrive
+                </button>
+            </div>
+            <div class="four wide column"></div>
+        </div>
+    {{/inline}}
+    {{#*inline 'scripts-block'}}
+        <script src="index.js"></script>
+    {{/inline}}
+    
+{{/base}}
