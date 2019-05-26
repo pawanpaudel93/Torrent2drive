@@ -8,6 +8,7 @@ const {google} = require('googleapis');
 var mime = require('mime-types');
 var LocalStorage = require('node-localstorage').LocalStorage;
 localStorage = new LocalStorage('public/scratch');
+require('dotenv').config();
 
 opts = {
   connections: 1000,     // Max amount of peers to be connected to.
@@ -58,7 +59,7 @@ app.use((req, res, next) =>{
     next();
 })
 app.get('/', (req, res)=>{
-   res.render('index.hbs');
+   res.render('index.hbs', {client_id: process.env.CLIENT_ID});
 })
 app.get('/downloader', (req, res)=>{
     res.render('downloader.hbs');
@@ -66,10 +67,10 @@ app.get('/downloader', (req, res)=>{
 app.post('/downloader', (req, res)=>{
     var code = localStorage.getItem('code');
     console.log('code', code);
-    var client_id = "508180742878-29lmfjuvj9n86vkh0aph9lu4hghs0me8.apps.googleusercontent.com";
+    var client_id = process.env.CLIENT_ID;
     var redirect_uri = "https://torrent-2-gdrive.herokuapp.com/downloader";
 // var redirect_uri = "http://localhost:3000/downloader"
-const client_secret = "NGteP4yLLi5cJJYxL6OzvNeo";
+const client_secret = process.env.CLIENT_SECRET;
 
     // /If modifying these scopes, delete token.json.
 const SCOPE = ['https://www.googleapis.com/auth/drive'];

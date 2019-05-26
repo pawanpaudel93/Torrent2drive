@@ -2,7 +2,7 @@ $(document).ready(function(){
      
     // client id of the project
 
-    var clientId = "508180742878-29lmfjuvj9n86vkh0aph9lu4hghs0me8.apps.googleusercontent.com";
+   //  var clientId = '{{client_id}}';
 
     // redirect_uri of the project
 

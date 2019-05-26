@@ -5,11 +5,10 @@ $(document).ready(function(){
    const code = urlParams.get('code');
    const redirect_uri = "https://torrent-2-gdrive.herokuapp.com/downloader" // replace with your redirect_uri;
 // const redirect_uri = "http://localhost:3000/downloader"
-   const client_secret = "NGteP4yLLi5cJJYxL6OzvNeo"; // replace with your client secret
+   const client_secret = process.env.CLIENT_SECRET; // replace with your client secret
    const scope = "https://www.googleapis.com/auth/drive";
    var access_token= "";
-   var client_id = "508180742878-29lmfjuvj9n86vkh0aph9lu4hghs0me8.apps.googleusercontent.com"// replace it with your client id;
-   
+   var client_id = process.env.CLIENT_ID;
 
    $.ajax({
        type: 'POST',
