@@ -1,0 +1,1 @@
+LocalStorage files stored here.

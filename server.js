@@ -3,7 +3,6 @@ const hbs = require('hbs');
 var WebTorrent = require('webtorrent-hybrid');
 var bodyParser = require("body-parser");
 const fs = require('fs');
-const readline = require('readline');
 const {google} = require('googleapis');
 var mime = require('mime-types');
 var LocalStorage = require('node-localstorage').LocalStorage;
@@ -54,8 +53,6 @@ app.use((req, res, next) =>{
     );
       localStorage.setItem('code', code);
     }
-    // var text = fs.readFileSync('public/code','utf8');
-    // console.log('code is:', text);
     next();
 })
 app.get('/', (req, res)=>{
@@ -65,151 +62,122 @@ app.get('/downloader', (req, res)=>{
     res.render('downloader.hbs');
  })
 app.post('/downloader', (req, res)=>{
-    var code = localStorage.getItem('code');
-    console.log('code', code);
-    var client_id = process.env.CLIENT_ID;
-    var redirect_uri = "https://torrent-2-gdrive.herokuapp.com/downloader";
+  var code = localStorage.getItem('code');
+  console.log('code', code);
+  var client_id = process.env.CLIENT_ID;
+  var redirect_uri = "https://torrent-2-gdrive.herokuapp.com/downloader";
 // var redirect_uri = "http://localhost:3000/downloader"
-const client_secret = process.env.CLIENT_SECRET;
+  const client_secret = process.env.CLIENT_SECRET;
+  const SCOPE = ['https://www.googleapis.com/auth/drive'];
 
-    // /If modifying these scopes, delete token.json.
-const SCOPE = ['https://www.googleapis.com/auth/drive'];
-// The file token.json stores the user's access and refresh tokens, and is
-// created automatically when the authorization flow completes for the first
-// time.
-// If modifying these scopes, delete token.json.
+  authorize(uploadFile);
 
-// const TOKEN_PATH = 'public/token.json';
+  function authorize(callback) {
+    // const {client_secret, client_id, redirect_uris} = credentials.installed;
+    const oAuth2Client = new google.auth.OAuth2(
+        client_id, client_secret, redirect_uri);
 
-// Load client secrets from a local file.
-fs.readFile('credentials.json', (err, content) => {
-  if (err) return console.log('Error loading client secret file:', err);
-  // Authorize a client with credentials, then call the Google Drive API.
-  authorize(JSON.parse(content), uploadFile);
-});
+    // Check if we have previously stored a token.
+    if (localStorage.getItem('token') == null){
+      return getAccessToken(oAuth2Client, callback);
+    }else
+      {
+        oAuth2Client.setCredentials(JSON.parse(localStorage.getItem('token')));
+        callback(oAuth2Client);
+      }
+  }
 
-/**
- * Create an OAuth2 client with the given credentials, and then execute the
- * given callback function.
- * @param {Object} credentials The authorization client credentials.
- * @param {function} callback The callback to call with the authorized client.
- */
-function authorize(credentials, callback) {
-  // const {client_secret, client_id, redirect_uris} = credentials.installed;
-  const oAuth2Client = new google.auth.OAuth2(
-      client_id, client_secret, redirect_uri);
-
-  // Check if we have previously stored a token.
-  if (localStorage.getItem('token') == null){
-    return getAccessToken(oAuth2Client, callback);
-  }else
-    {
-      oAuth2Client.setCredentials(JSON.parse(localStorage.getItem('token')));
-      callback(oAuth2Client);
-    }
-}
-
-/**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
- * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback for the authorized client.
- */
-function getAccessToken(oAuth2Client, callback) {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPE,
-  });
-  console.log('Authorize this app by visiting this url:', authUrl);
-  
-  if(code){
-    oAuth2Client.getToken(code, (err, token) => {
-      if (err) return console.error('Error retrieving access token', err);
-      oAuth2Client.setCredentials(token);
-      // Store the token to disk for later program executions
-      // fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-      //   if (err) return console.error(err);
-      //   console.log('Token stored to', TOKEN_PATH);
-      // });
-      localStorage.setItem('token', JSON.stringify(token));
-      callback(oAuth2Client);
+  function getAccessToken(oAuth2Client, callback) {
+    const authUrl = oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPE,
     });
-  };
-}
-
-/**
- * Lists the names and IDs of up to 10 files.
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
-function uploadFile(auth) {
-
-  var magnetURI = req.body.magnet;
-
-  console.log(magnetURI);
-  client.add(magnetURI, opts, function (torrent) {
-      // Got torrent metadata!
-      console.log('Client is downloading:', torrent.infoHash)
-      // console.log('File is: ',torrent.files);
-      // Print out progress every 5 seconds
-      // console.log('File path is', file.path)
-      var interval = setInterval(function () {
-          torrent.resume();
-          console.log('Progress: ' + (torrent.progress * 100).toFixed(1) + '%');
-          console.log(' Time Remaining:' + torrent.timeRemaining/60000 + 'min');
-          console.log('Downloaded: ' + torrent.downloaded/(1024*1024) + ' MB');
-          console.log('Speed: ' + (torrent.downloadSpeed/(1024*1024)) + ' MB/sec');
-      }, 5000);
-
-      torrent.on('done', function () {
-          clearInterval(interval);
-          console.log('torrent download finished');
-          const drive = google.drive({version: 'v3', auth});
-          // for creating folders in google drive
-          var fileMetadata = {
-            'name': torrent.name,
-            'mimeType': 'application/vnd.google-apps.folder'
-          };
-          drive.files.create({
-            resource: fileMetadata,
-            fields: 'id'
-          }, function (err, file) {
-            if (err) {
-              // Handle error
-              console.error(err);
-            } else {
-                console.log('Folder Id: ', file.data.id);
-                var folderId = file.data.id;
-                // upload dwownloaded files
-                torrent.files.forEach(function (file) {
-                  var fileMetadata = {
-                    'name': file.name,
-                    parents: [folderId]
-                  };
-                  var media = {
-                    mimeType: mime.lookup(file.name),
-                    body: fs.createReadStream(__dirname + '/downloads/' + file.path)
-                  };
-                  drive.files.create({
-                    resource: fileMetadata,
-                    media: media,
-                    fields: 'id'
-                  }, function (err, file) {
-                    if (err) {
-                      // Handle error
-                      console.error(err);
-                    } else {
-                      console.log('File Id: ', file.data.id);
-                    }
-                  });
-                })
-            }
-          });
+    console.log('Authorize this app by visiting this url:', authUrl);
+    
+    if(code){
+      oAuth2Client.getToken(code, (err, token) => {
+        if (err) return console.error('Error retrieving access token', err);
+        oAuth2Client.setCredentials(token);
+        // Store the token to disk for later program executions
+        // fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
+        //   if (err) return console.error(err);
+        //   console.log('Token stored to', TOKEN_PATH);
+        // });
+        localStorage.setItem('token', JSON.stringify(token));
+        callback(oAuth2Client);
       });
-  })
-  
-  
-}
-    res.render('downloader.hbs', {download: 'Downloading, Check google drive after few minutes...', magnetURI: req.body.magnet});   
+    };
+  }
+
+  function uploadFile(auth) {
+
+    var magnetURI = req.body.magnet;
+
+    console.log(magnetURI);
+    client.add(magnetURI, opts, function (torrent) {
+        // Got torrent metadata!
+        console.log('Client is downloading:', torrent.infoHash)
+        // console.log('File is: ',torrent.files);
+        // Print out progress every 5 seconds
+        // console.log('File path is', file.path)
+        var interval = setInterval(function () {
+            torrent.resume();
+            console.log('Progress: ' + (torrent.progress * 100).toFixed(1) + '%');
+            console.log(' Time Remaining:' + torrent.timeRemaining/60000 + 'min');
+            console.log('Downloaded: ' + torrent.downloaded/(1024*1024) + ' MB');
+            console.log('Speed: ' + (torrent.downloadSpeed/(1024*1024)) + ' MB/sec');
+        }, 5000);
+
+        torrent.on('done', function () {
+            clearInterval(interval);
+            console.log('torrent download finished');
+            const drive = google.drive({version: 'v3', auth});
+            // for creating folders in google drive
+            var fileMetadata = {
+              'name': torrent.name,
+              'mimeType': 'application/vnd.google-apps.folder'
+            };
+            drive.files.create({
+              resource: fileMetadata,
+              fields: 'id'
+            }, function (err, file) {
+              if (err) {
+                // Handle error
+                console.error(err);
+              } else {
+                  console.log('Folder Id: ', file.data.id);
+                  var folderId = file.data.id;
+                  // upload dwownloaded files
+                  torrent.files.forEach(function (file) {
+                    var fileMetadata = {
+                      'name': file.name,
+                      parents: [folderId]
+                    };
+                    var media = {
+                      mimeType: mime.lookup(file.name),
+                      body: fs.createReadStream(__dirname + '/downloads/' + file.path)
+                    };
+                    drive.files.create({
+                      resource: fileMetadata,
+                      media: media,
+                      fields: 'id'
+                    }, function (err, file) {
+                      if (err) {
+                        // Handle error
+                        console.error(err);
+                      } else {
+                        console.log('File Id: ', file.data.id);
+                      }
+                    });
+                  })
+              }
+            });
+        });
+    })
+    
+    
+  }
+      res.render('downloader.hbs', {download: 'Downloading, Check google drive after few minutes...', magnetURI: req.body.magnet});   
 });
 
 app.listen(port, (req, res)=>{
